@@ -306,25 +306,43 @@ class Toggles(PhaseThread):
         # TODO
         self._running = True
         while self._running:
+            
+            values = []
+            for pin in self._component:
+                values.append(pin.value)
+            
+            solution = str(bin(self._target))
+            solution = solution[2:]
+            print("Solution:", solution)
+            
             if self._value == self._target:
                 self._defused = True
             
-        values = []
-        for pin in self._component:
-            values.append(pin.value)
-                
             elif self._value != self._prev_value:
-                solution = str(bin(self._target))
-                solution = solution[2:]
+                solution = []
+                temp = str(bin(self._target))
+                
+                if len(temp) == 1:
+                    temp = "000" + temp
+                    
+                elif len(temp) == 2:
+                    temp = "00" + temp
+                    
+                elif len(temp) == 3:
+                    temp = "0" + temp
+                    
+                for j in range(2, len(temp)):
+                    solution.append(temp[j])
+                
+                print(solution)
+                
                 for i in range(len(values)):
-                    if sloution[i] == "0"
+                    if solution[i] == "0":
                         if values[i] != int(solution[i]):
                             self._failed = True
-                    
-                
+
                 self._prev_value = self._value
-        # pin.value for pin in self.component
-        pass
+                
 
     # returns the toggle switches state as a string
     def __str__(self):

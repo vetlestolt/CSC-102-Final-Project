@@ -6,9 +6,9 @@
 
 # constants
 DEBUG = True        # debug mode?
-RPi = False           # is this running on the RPi?
-ANIMATE = True       # animate the LCD text?
-SHOW_BUTTONS = False # show the Pause and Quit buttons on the main LCD GUI?
+RPi = True           # is this running on the RPi?
+ANIMATE = False       # animate the LCD text?
+SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 300      # the initial bomb countdown value (seconds)
 NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
 NUM_PHASES = 4       # the total number of initial active bomb phases
@@ -174,19 +174,6 @@ def genKeypadCombination():
 
     return keyword, cipher_keyword, rot, combination, passphrase
 
-def get_toggle_target(keypad_target):
-    combination = 0
-    print(keypad_target)
-    for number in str(keypad_target):
-        print(number)
-        combination += int(number)
-        
-    combination = combination % 16
-    if combination == 0:
-        combination = 15
-    return combination
-        
-
 ###############################
 # generate the bomb's specifics
 ###############################
@@ -203,7 +190,7 @@ serial, toggles_target, wires_target = genSerial()
 #  keypad_target: the keypad phase defuse value (combination)
 #  passphrase: the target plaintext passphrase
 keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
-toggles_target = get_toggle_target(keypad_target)
+wires_target = rot
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
@@ -217,7 +204,7 @@ elif (button_color == "B"):
 
 if (DEBUG):
     print(f"Serial number: {serial}")
-    print(f"Toggles target: {bin(toggles_target)[2:].zfill(4)}/{toggles_target}")
+    print(f"Toggles target: {bin(toggles_target) [2:].zfill(4)}/{toggles_target}")
     print(f"Wires target: {bin(wires_target)[2:].zfill(5)}/{wires_target}")
     print(f"Keypad target: {keypad_target}/{passphrase}/{keyword}/{cipher_keyword}(rot={rot})")
     print(f"Button target: {button_target}")

@@ -300,54 +300,49 @@ class Button(PhaseThread):
 class Toggles(PhaseThread):
     def __init__(self, component, target, name="Toggles"):
         super().__init__(name, component, target)
+        self._temp = 0
 
     # runs the thread
     def run(self):
         # TODO
         self._running = True
         while self._running:
-            
-            values = []
-            for pin in self._component:
-                values.append(pin.value)
-            
-            solution = str(bin(self._target))
-            solution = solution[2:]
-            print("Solution:", solution)
-            
+                    
+            self._value = self.get_value()
             if self._value == self._target:
                 self._defused = True
             
+            
             elif self._value != self._prev_value:
-                solution = []
-                temp = str(bin(self._target))
-                
-                if len(temp) == 1:
-                    temp = "000" + temp
-                    
-                elif len(temp) == 2:
-                    temp = "00" + temp
-                    
-                elif len(temp) == 3:
-                    temp = "0" + temp
-                    
-                for j in range(2, len(temp)):
-                    solution.append(temp[j])
-                
-                print(solution)
-                
-                for i in range(len(values)):
-                    if solution[i] == "0":
-                        if values[i] != int(solution[i]):
-                            self._failed = True
-
+                value = self.get_bin_value()
+                solution = bin(self._target)
+                solution = solution[2:].zfill(4)
+                for i in range(len(value)):
+                    if solution[i] == "0" and value[i] == "1":
+                        self._failed = True
+                        
                 self._prev_value = self._value
-                
+                   
+            
+            sleep(0.1)
+    def get_bin_value(self):
+        pins = ""
+        for pin in self._component:
+            if (pin.value == True):
+                pins += "1"
+            else:
+                pins += "0"
 
+        return pins
+    
+    def get_value(self):        
+        value = int(self.get_bin_value(), 2)
+        
+        return value    
     # returns the toggle switches state as a string
     def __str__(self):
         if (self._defused):
             return "DEFUSED"
         else:
             # TODO
-            pass
+            return str(self._temp)

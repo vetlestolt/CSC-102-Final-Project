@@ -139,7 +139,7 @@ class PhaseThread(Thread):
         self._value = None
         # phase threads are either running or not
         self._running = False
-        
+        # phase have a previous value
         self._prev_value = None
 
 # the timer phase
@@ -234,8 +234,35 @@ class Wires(PhaseThread):
 
     # runs the thread
     def run(self):
-        # TODO
-        pass
+        while self._running:
+            self._value = self.get_value()
+            
+            if self._target == self._value:
+                self._defused = True
+                
+            elif self._value != self._prev_value:
+                value = self.get_bin_value()
+                solution = bin(self._target)
+                solution = solution[2:].zfill(4)
+                for i in range(len(value)):
+                    if solution[i] == "1" and value[i] == "0":
+                        self._failed = True
+                        
+                self._prev_value = self._value
+            
+            
+    def get_bin_value(self):
+        pins = ""
+        for pin in self._component:
+            if (pin.value == True):
+                pins += "1"
+            else:
+                pins += "0"
+        return pins
+    
+    def get_value(self):        
+        value = int(self.get_bin_value(), 2)
+        return value    
 
     # returns the jumper wires state as a string
     def __str__(self):
@@ -344,5 +371,5 @@ class Toggles(PhaseThread):
         if (self._defused):
             return "DEFUSED"
         else:
-            # TODO
-            return str(self._temp)
+            
+            return str(self._value)

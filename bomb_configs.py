@@ -12,6 +12,11 @@ SHOW_BUTTONS = True # show the Pause and Quit buttons on the main LCD GUI?
 COUNTDOWN = 300      # the initial bomb countdown value (seconds)
 NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
 NUM_PHASES = 4       # the total number of initial active bomb phases
+# storing the audio files
+EXPLODE = "bombexplode.mp3"
+SUCCESS = "bombdefuse.mp3"
+STRIKE = "strike.mp3"
+DEFUSED = "phasedefused.mp3"
 
 # imports
 from random import randint, shuffle, choice
@@ -173,6 +178,17 @@ def genKeypadCombination():
     combination = digits(passphrase)
 
     return keyword, cipher_keyword, rot, combination, passphrase
+#  this function converts the keypad target by mod 16
+# if answer kypad target mod 16 is 0 it return 15
+def convert_kp_target(keypad_target):
+    keypad_target = str(keypad_target)
+    temp = 0
+    for num in keypad_target:
+        temp += int(num)
+    if temp % 16 == 0:
+        return 15
+    else:
+        return temp % 16
 
 ###############################
 # generate the bomb's specifics
@@ -190,7 +206,9 @@ serial, toggles_target, wires_target = genSerial()
 #  keypad_target: the keypad phase defuse value (combination)
 #  passphrase: the target plaintext passphrase
 keyword, cipher_keyword, rot, keypad_target, passphrase = genKeypadCombination()
+# set wires and toggles target
 wires_target = rot
+toggles_target = convert_kp_target(keypad_target)
 # generate the color of the pushbutton (which determines how to defuse the phase)
 button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)

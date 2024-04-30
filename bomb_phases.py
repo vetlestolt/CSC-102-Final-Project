@@ -10,6 +10,7 @@ from bomb_configs import *
 from tkinter import *
 import tkinter
 from threading import Thread
+import pygame
 from time import sleep
 import os
 import sys
@@ -83,7 +84,9 @@ class Lcd(Frame):
             self._timer.pause()
 
     # setup the conclusion GUI (explosion/defusion)
-    def conclusion(self, success=False):
+    def conclusion(self, exploding=False, success=False):
+        while not exploding and pygame.mixer.music.get_busy():
+            sleep(0.1)
         # destroy/clear widgets that are no longer needed
         self._lscroll["text"] = ""
         self._ltimer.destroy()
@@ -103,6 +106,12 @@ class Lcd(Frame):
         # the quit button
         self._bquit = tkinter.Button(self, bg="red", fg="white", font=("Courier New", 18), text="Quit", anchor=CENTER, command=self.quit)
         self._bquit.grid(row=1, column=2, pady=40)
+        # plays the corresponding sound to the outcome
+        if success:
+            pygame.mixer.music.load(SUCCESS)
+        else:
+            pygame.mixer.music.load(EXPLODE)
+        pygame.mixer.music.play(1)
 
     # re-attempts the bomb (after an explosion or a successful defusion)
     def retry(self):
@@ -223,7 +232,7 @@ class Keypad(PhaseThread):
     # returns the keypad combination as a string
     def __str__(self):
         if (self._defused):
-            return "DEFUSED"
+            return "DEFUSED " + self._target
         else:
             return self._value
 
@@ -234,23 +243,28 @@ class Wires(PhaseThread):
 
     # runs the thread
     def run(self):
+        self._running = True
         while self._running:
             self._value = self.get_value()
-            
+            # if input is = to target phase is defused
             if self._target == self._value:
                 self._defused = True
-                
+            # checks if something changed or not
+            # if changed evaluates it
+            # if change cannot be the target outcome gives a strike
             elif self._value != self._prev_value:
                 value = self.get_bin_value()
                 solution = bin(self._target)
-                solution = solution[2:].zfill(4)
+                solution = solution[2:].zfill(5)
+                print(value, solution)
                 for i in range(len(value)):
-                    if solution[i] == "1" and value[i] == "0":
+                    if solution[i] =="1" and value[i] == "0":
                         self._failed = True
-                        
+                        break
+                # sets prev value        
                 self._prev_value = self._value
-            
-            
+            sleep(0.1)
+    # this function converts the inputs into binary        
     def get_bin_value(self):
         pins = ""
         for pin in self._component:
@@ -259,7 +273,7 @@ class Wires(PhaseThread):
             else:
                 pins += "0"
         return pins
-    
+    # this function converts binary to decimal(used tp convert the inputs)
     def get_value(self):        
         value = int(self.get_bin_value(), 2)
         return value    
@@ -269,8 +283,7 @@ class Wires(PhaseThread):
         if (self._defused):
             return "DEFUSED"
         else:
-            # TODO
-            pass
+            return str(self._value)
 
 # the pushbutton phase
 class Button(PhaseThread):
@@ -334,12 +347,14 @@ class Toggles(PhaseThread):
         # TODO
         self._running = True
         while self._running:
-                    
+            # if the input is = to target the phase gets defused        
             self._value = self.get_value()
             if self._value == self._target:
                 self._defused = True
             
-            
+            # checks if something changed or not
+            # if changed evaluates it
+            # if change cannot be the target outcome gives a strike
             elif self._value != self._prev_value:
                 value = self.get_bin_value()
                 solution = bin(self._target)
@@ -347,11 +362,10 @@ class Toggles(PhaseThread):
                 for i in range(len(value)):
                     if solution[i] == "0" and value[i] == "1":
                         self._failed = True
-                        
-                self._prev_value = self._value
-                   
-            
+                # sets previous value        
+                self._prev_value = self._value  
             sleep(0.1)
+    # converts the toggle values into binary        
     def get_bin_value(self):
         pins = ""
         for pin in self._component:
@@ -359,17 +373,14 @@ class Toggles(PhaseThread):
                 pins += "1"
             else:
                 pins += "0"
-
         return pins
-    
+    # converts binary values to decimal(used to convert input values)
     def get_value(self):        
         value = int(self.get_bin_value(), 2)
-        
         return value    
     # returns the toggle switches state as a string
     def __str__(self):
         if (self._defused):
             return "DEFUSED"
-        else:
-            
+        else: 
             return str(self._value)

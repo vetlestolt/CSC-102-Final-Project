@@ -9,6 +9,7 @@ from bomb_configs import *
 # import the phases
 from bomb_phases import *
 
+
 ###########
 # functions
 ###########
@@ -62,7 +63,7 @@ def setup_phases():
 
 # checks the phase threads
 def check_phases():
-    global active_phases
+    global active_phases, exploding
     
     # check the timer
     if (timer._running):
@@ -72,7 +73,7 @@ def check_phases():
         # the countdown has expired -> explode!
         # turn off the bomb and render the conclusion GUI
         turn_off()
-        gui.after(100, gui.conclusion, False)
+        gui.after(100, gui.conclusion, exploding, False)
         # don't check any more phases
         return
     # check the keypad
@@ -82,7 +83,7 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (keypad._defused):
             keypad._running = False
-            active_phases -= 1
+            defused()
         # the phase has failed -> strike
         elif (keypad._failed):
             strike()
@@ -96,7 +97,7 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (wires._defused):
             wires._running = False
-            active_phases -= 1
+            defused()
         # the phase has failed -> strike
         elif (wires._failed):
             strike()
@@ -109,7 +110,7 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (button._defused):
             button._running = False
-            active_phases -= 1
+            defused()
         # the phase has failed -> strike
         elif (button._failed):
             strike()
@@ -122,7 +123,7 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (toggles._defused):
             toggles._running = False
-            active_phases -= 1
+            defused()
         # the phase has failed -> strike
         elif (toggles._failed):
             strike()
@@ -135,15 +136,17 @@ def check_phases():
     if (strikes_left == 0):
         # turn off the bomb and render the conclusion GUI
         turn_off()
-        gui.after(1000, gui.conclusion, False)
+        gui.after(1000, gui.conclusion, exploding, False)
+        
         # stop checking phases
         return
 
     # the bomb has been successfully defused!
     if (active_phases == 0):
+        
         # turn off the bomb and render the conclusion GUI
         turn_off()
-        gui.after(100, gui.conclusion, True)
+        gui.after(100, gui.conclusion, exploding, True)
         # stop checking phases
         return
 
@@ -156,6 +159,20 @@ def strike():
     
     # note the strike
     strikes_left -= 1
+    # plays the strike sound in case of a strike
+    if not exploding:
+        pygame.mixer.music.load(STRIKE)
+        pygame.mixer.music.play(1)
+
+# deals with phase defuse
+def defused():
+    global active_phases
+    
+    active_phases -= 1
+    # plays the defuse sound in case of a phase gets defused
+    if not exploding:
+        pygame.mixer.music.load(DEFUSED)
+        pygame.mixer.music.play(1)
 
 # turns off the bomb
 def turn_off():
@@ -177,6 +194,8 @@ def turn_off():
 # MAIN
 ######
 
+pygame.init()
+
 # initialize the LCD GUI
 window = Tk()
 gui = Lcd(window)
@@ -184,6 +203,7 @@ gui = Lcd(window)
 # initialize the bomb strikes and active phases (i.e., not yet defused)
 strikes_left = NUM_STRIKES
 active_phases = NUM_PHASES
+exploding = False
 
 # "boot" the bomb
 gui.after(1000, bootup)
